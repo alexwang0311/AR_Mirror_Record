@@ -8,8 +8,8 @@ public class MyDataExporter : MonoBehaviour {
     public string fileName = "TestRecord.csv";
     private System.IO.StreamWriter file;
 
-    // Use this for initialization
-    private void Start () {
+    public void ExportData()
+    {
         CreateFile();
         WriteToFile();
     }
@@ -21,12 +21,14 @@ public class MyDataExporter : MonoBehaviour {
             file = new System.IO.StreamWriter(@fileName, true);
             {
                 file.WriteLine("All joint Positions");
+                file.Write(",");
                 foreach (var joint in MyJointTracker.Joints)
                 {
                     file.Write(joint.ToString() + ",");
                 }
                 file.WriteLine();
             }
+            Debug.Log("File created");
         }
         catch (Exception ex)
         {
@@ -40,12 +42,14 @@ public class MyDataExporter : MonoBehaviour {
         {
             for (int frameIndex = 0; frameIndex < MyJointTracker.jointStats[MyJointTracker.Joints[0]].Count; ++frameIndex)
             {
+                file.Write(MyJointTracker.timeStamps[frameIndex].ToString("0.##") + ",");
                 foreach (var joint in MyJointTracker.Joints)
                 {
                     file.Write(DataToString(MyJointTracker.jointStats[joint][frameIndex]) + ",");
                 }
                 file.WriteLine();
             }
+            Debug.Log("Writing finished");
         }
         catch (Exception ex)
         {

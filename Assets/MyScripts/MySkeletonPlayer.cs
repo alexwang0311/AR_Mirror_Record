@@ -31,14 +31,8 @@ public class MySkeletonPlayer : MonoBehaviour
     private int index;
     bool isOver;
 
-    private const int MAXROUNDS = 1;
-    private int roundCounter;
-    public Text roundText;
-
     void Start()
     {
-        roundCounter = 1;
-        roundText.text = roundCounter.ToString();
         isOver = false;
         index = 0;
         joints = new GameObject[19];
@@ -50,31 +44,12 @@ public class MySkeletonPlayer : MonoBehaviour
         }
     }
 
-    void Update()
-    {
-        if (roundCounter <= MAXROUNDS)
+    void Update() {
+        if (!isOver)
         {
-            if (!isOver)
-            {
-                isOver = DisplaySkeleton(MyJointTracker.jointStats, index);
-                index++;
-            }
-            else
-            {
-                index = 0;
-                isOver = false;
-                roundCounter++;
-                roundText.text = roundCounter.ToString();
-            }
+            isOver = DisplaySkeleton(MyJointTracker.jointStats, index);
+            index++;
         }
-        //Resets the stats container after all the rounds
-        else
-        {
-            roundText.text = "Switching to recording mode";
-            Reset(MyJointTracker.jointStats);
-            SceneManager.LoadScene("Record");
-        }
-
     }
 
     //Return true if frameIndex goes beyond jointsStats
@@ -211,17 +186,12 @@ public class MySkeletonPlayer : MonoBehaviour
                 torsoRenderer.SetPositions(torsoPos);
             }
         }
-
         return false;
     }
 
-    //Clear all data
-    void Reset(Dictionary<Astra.JointType, List<Vector3>> jointStats)
+    public void RestartReplay()
     {
-        for (int i = 0; i < MyJointTracker.Joints.Length; ++i)
-        {
-            Astra.JointType jointType = MyJointTracker.Joints[i];
-            jointStats[jointType].Clear();
-        }
+        isOver = false;
+        index = 0;
     }
 }

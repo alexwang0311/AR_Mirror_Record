@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System;
 
 public class MyJointTracker : MonoBehaviour {
     public static Dictionary<Astra.JointType, List<Vector3>> jointStats = new Dictionary<Astra.JointType, List<Vector3>>() {
@@ -31,6 +32,8 @@ public class MyJointTracker : MonoBehaviour {
         {Astra.JointType.RightWrist, new List<Vector3>() },
         {Astra.JointType.ShoulderSpine, new List<Vector3>() }
     };
+
+    public static List<float> timeStamps;
 
     //To be used to interate through the joints
     public static readonly Astra.JointType[] Joints = new Astra.JointType[]
@@ -58,41 +61,71 @@ public class MyJointTracker : MonoBehaviour {
 
     public Transform JointRoot;
     public Text MessageOnPause;
+    public Text MessageOnRecord;
+    public Text MessageOnStop;
     private float beginTime;
-    private float pauseTime;
-    //Set to be public so that it is visible to MyCountDownTimer class
-    public const float RECORDLENGTH = 15f;
+    private bool isRecording;
 
     // Use this for initialization
     void Start () {
+        Reset(jointStats);
         beginTime = Time.time;
+        isRecording = false;
+        timeStamps = new List<float>();
     }
 	
 
 	// Update is called once per frame
 	void Update () {
-        if (Time.time - beginTime >= RECORDLENGTH + pauseTime)
-        {
-            SceneManager.LoadScene("Replay");
-        }
-
-        if (MySkeletonRenderer.bodyExists) {
-            if (MessageOnPause.IsActive())
+        if (isRecording) {
+            if (!MessageOnRecord.IsActive())
             {
-                MessageOnPause.gameObject.SetActive(false);
-                //Debug.Log("MessageOnPause is now disabled");
+                MessageOnRecord.gameObject.SetActive(true);
+                Debug.Log("Recording starts");
+                if (MessageOnStop.IsActive())
+                {
+                    MessageOnStop.gameObject.SetActive(false);
+                    Debug.Log("MessageOnStop is now disabled");
+                }
             }
-            Record();
+
+
+            if (MySkeletonRenderer.bodyExists)
+            {
+                if (MessageOnPause.IsActive())
+                {
+                    MessageOnPause.gameObject.SetActive(false);
+                    //Debug.Log("MessageOnPause is now disabled");
+                }
+                Record();
+            }
+            else
+            {
+                if (!MessageOnPause.IsActive())
+                {
+                    MessageOnPause.gameObject.SetActive(true);
+                    //Debug.Log("MessageOnPause is now enabled");
+                }
+            }
         }
         else
         {
-            if (!MessageOnPause.IsActive())
+            if (!MessageOnStop.IsActive())
             {
-                MessageOnPause.gameObject.SetActive(true);
-                //Debug.Log("MessageOnPause is now enabled");
+                MessageOnStop.gameObject.SetActive(true);
+                Debug.Log("Recording ends");
+                if (MessageOnRecord.IsActive())
+                {
+                    MessageOnRecord.gameObject.SetActive(false);
+                    Debug.Log("MessageOnRecord is now disabled");
+                }
+                if (MessageOnPause.IsActive())
+                {
+                    MessageOnPause.gameObject.SetActive(false);
+                    Debug.Log("MessageOnPause is now disabled");
+                }
             }
-            pauseTime += 1 * Time.deltaTime;
-            //Debug.Log("Pause Time: " + pauseTime);
+            
         }
     }
 
@@ -103,6 +136,33 @@ public class MyJointTracker : MonoBehaviour {
             GameObject myJoint = JointRoot.transform.Find(joint.ToString()).gameObject;
             jointStats[joint].Add(myJoint.transform.position);
         }
+
+        timeStamps.Add(Time.time - beginTime);
     }
 
+    void Reset(Dictionary<Astra.JointType, List<Vector3>> jointStats)
+    {
+        try
+        {
+            for (int i = 0; i < MyJointTracker.Joints.Length; ++i)
+            {
+                Astra.JointType jointType = MyJointTracker.Joints[i];
+                jointStats[jointType].Clear();
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.Log(ex.Message);
+        }
+    }
+
+    public void StartRecording()
+    {
+        isRecording = true;
+    }
+
+    public void EndRecording()
+    {
+        isRecording = false;
+    }
 }
